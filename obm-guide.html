@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>On-Board Monitoring (OBM) Guide</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-900: #0a1628;
+      --blue-800: #0d1f3c;
+      --blue-700: #112d54;
+      --blue-600: #1a3f6f;
+      --blue-500: #1e5096;
+      --blue-400: #2563bf;
+      --blue-300: #3b82f6;
+      --blue-200: #93c5fd;
+      --blue-100: #dbeafe;
+      --blue-50:  #eff6ff;
+      --accent:   #00c6ff;
+      --accent2:  #0077cc;
+      --green:    #22c55e;
+      --amber:    #f59e0b;
+      --red:      #ef4444;
+      --gray-900: #111827;
+      --gray-800: #1f2937;
+      --gray-700: #374151;
+      --gray-600: #4b5563;
+      --gray-400: #9ca3af;
+      --gray-200: #e5e7eb;
+      --gray-100: #f3f4f6;
+      --gray-50:  #f9fafb;
+      --white:    #ffffff;
+      --sidebar-w: 280px;
+      --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      --radius: 8px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.16);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.22);
+      --transition: 0.2s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────── */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--blue-900);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 14px;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,.4);
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .topbar-logo svg { flex-shrink: 0; }
+
+    .topbar-brand {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: .3px;
+    }
+
+    .topbar-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255,255,255,.18);
+    }
+
+    .topbar-title {
+      font-size: 13px;
+      color: var(--blue-200);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-meta {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11.5px;
+      color: var(--blue-100);
+      white-space: nowrap;
+    }
+
+    .badge.green  { background: rgba(34,197,94,.15);  border-color: rgba(34,197,94,.3);  color: #86efac; }
+    .badge.amber  { background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.3); color: #fcd34d; }
+    .badge.blue   { background: rgba(59,130,246,.2);  border-color: rgba(59,130,246,.35); color: #93c5fd; }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 56px; left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--blue-800);
+      overflow-y: auto;
+      padding: 24px 0 40px;
+      z-index: 100;
+      border-right: 1px solid rgba(255,255,255,.07);
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
+
+    .sidebar-label {
+      padding: 0 20px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+    }
+
+    .nav-section { margin-bottom: 4px; }
+
+    .nav-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+
+    .nav-section-header:hover { color: rgba(255,255,255,.8); }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 20px 6px 30px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.62);
+      text-decoration: none;
+      transition: background var(--transition), color var(--transition);
+      border-left: 2px solid transparent;
+      line-height: 1.4;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,.06);
+      color: var(--white);
+    }
+
+    .nav-item.active {
+      background: rgba(37,99,191,.3);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-num {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 700;
+      width: 22px;
+      height: 17px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,.4);
+    }
+
+    .nav-item.active .nav-num {
+      background: rgba(0,198,255,.2);
+      color: var(--accent);
+    }
+
+    /* ── Main content ─────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 60%, var(--blue-600) 100%);
+      padding: 60px 64px 52px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(0,198,255,.1) 0%, transparent 70%),
+        radial-gradient(ellipse 30% 30% at 20% 20%, rgba(59,130,246,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 820px; }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .hero-eyebrow-text {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .hero-eyebrow-line {
+      flex: 1;
+      max-width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+
+    .hero h1 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.2;
+      letter-spacing: -.5px;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 span { color: var(--accent); }
+
+    .hero-subtitle {
+      font-size: 15.5px;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 32px;
+      max-width: 620px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat { text-align: left; }
+
+    .hero-stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .hero-stat-val span { color: var(--accent); }
+
+    .hero-stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,.4);
+      font-weight: 600;
+    }
+
+    /* ── Content area ─────────────────────────────────────────── */
+    .content {
+      padding: 48px 64px 80px;
+      max-width: 900px;
+    }
+
+    /* ── Section wrappers ─────────────────────────────────────── */
+    .doc-section {
+      margin-bottom: 56px;
+      scroll-margin-top: 80px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--blue-100);
+    }
+
+    .section-num-badge {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-400));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(30,80,150,.35);
+    }
+
+    .section-title-block {}
+
+    .section-num-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--blue-400);
+      margin-bottom: 2px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--blue-900);
+      letter-spacing: -.3px;
+    }
+
+    /* ── Subsections ──────────────────────────────────────────── */
+    .subsection { margin-bottom: 28px; }
+
+    .subsection-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .subsection-pill {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .8px;
+      color: var(--blue-500);
+      background: var(--blue-100);
+      border-radius: 5px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    .subsection-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    /* ── Text ─────────────────────────────────────────────────── */
+    p {
+      font-size: 14.5px;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+    }
+
+    /* ── Callout boxes ────────────────────────────────────────── */
+    .callout {
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .callout-body { flex: 1; }
+
+    .callout-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .callout p {
+      font-size: 13.5px;
+      margin: 0;
+    }
+
+    .callout.info {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-200);
+    }
+    .callout.info .callout-title { color: var(--blue-600); }
+    .callout.info p { color: var(--blue-700); }
+
+    .callout.highlight {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e0f0ff 100%);
+      border: 1px solid #b3d9ff;
+      border-left: 4px solid var(--blue-400);
+    }
+    .callout.highlight .callout-title { color: var(--blue-600); }
+    .callout.highlight p { color: var(--blue-800); font-style: italic; font-size: 14.5px; }
+
+    .callout.warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+    .callout.warning .callout-title { color: #92400e; }
+    .callout.warning p { color: #78350f; }
+
+    .callout.success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+    .callout.success .callout-title { color: #166534; }
+    .callout.success p { color: #14532d; }
+
+    /* ── Bullet lists ─────────────────────────────────────────── */
+    ul.doc-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 16px;
+    }
+
+    ul.doc-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 5px 0;
+      font-size: 14px;
+      color: var(--gray-700);
+    }
+
+    ul.doc-list li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue-400);
+      margin-top: 8px;
+    }
+
+    ul.doc-list.check li::before {
+      content: '✓';
+      width: auto;
+      height: auto;
+      background: none;
+      color: var(--green);
+      font-weight: 700;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    /* ── Flow diagram ─────────────────────────────────────────── */
+    .flow-pipeline {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      margin: 20px 0;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 20px 24px;
+    }
+
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .flow-step-box {
+      background: var(--white);
+      border: 1.5px solid var(--blue-200);
+      border-radius: var(--radius);
+      padding: 9px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--blue-700);
+      white-space: nowrap;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .flow-step-box.highlight-step {
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-400));
+      border-color: var(--blue-400);
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(30,80,150,.3);
+    }
+
+    .flow-arrow {
+      font-size: 18px;
+      color: var(--blue-300);
+      padding: 0 8px;
+      font-weight: 300;
+    }
+
+    /* ── ECU grid ─────────────────────────────────────────────── */
+    .ecu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .ecu-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow var(--transition), transform var(--transition);
+      border-top: 3px solid var(--blue-300);
+    }
+
+    .ecu-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .ecu-card.primary { border-top-color: var(--blue-500); }
+    .ecu-card.secondary { border-top-color: var(--accent); }
+    .ecu-card.gateway  { border-top-color: var(--amber); }
+    .ecu-card.sender   { border-top-color: var(--green); }
+    .ecu-card.display  { border-top-color: #a855f7; }
+    .ecu-card.warn     { border-top-color: var(--red); }
+
+    .ecu-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ecu-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .ecu-card.primary  .ecu-icon { background: #dbeafe; }
+    .ecu-card.secondary .ecu-icon { background: #e0f7ff; }
+    .ecu-card.gateway  .ecu-icon { background: #fef3c7; }
+    .ecu-card.sender   .ecu-icon { background: #dcfce7; }
+    .ecu-card.display  .ecu-icon { background: #f3e8ff; }
+    .ecu-card.warn     .ecu-icon { background: #fee2e2; }
+
+    .ecu-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+
+    .ecu-role-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+
+    .ecu-card.primary  .ecu-role-tag { background: #dbeafe; color: var(--blue-600); }
+    .ecu-card.secondary .ecu-role-tag { background: #e0f7ff; color: #0077a8; }
+    .ecu-card.gateway  .ecu-role-tag { background: #fef3c7; color: #92400e; }
+    .ecu-card.sender   .ecu-role-tag { background: #dcfce7; color: #166534; }
+    .ecu-card.display  .ecu-role-tag { background: #f3e8ff; color: #6b21a8; }
+    .ecu-card.warn     .ecu-role-tag { background: #fee2e2; color: #991b1b; }
+
+    .ecu-desc {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    /* ── Output paths ─────────────────────────────────────────── */
+    .path-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .path-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 22px 20px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .path-card-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .path-card-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 6px;
+    }
+
+    .path-card-desc {
+      font-size: 12.5px;
+      color: var(--gray-500);
+    }
+
+    /* ── Numbered flow list ───────────────────────────────────── */
+    ol.flow-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+      counter-reset: flow-counter;
+    }
+
+    ol.flow-list li {
+      counter-increment: flow-counter;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--gray-200);
+      font-size: 14px;
+      color: var(--gray-700);
+    }
+
+    ol.flow-list li:last-child { border-bottom: none; }
+
+    ol.flow-list li::before {
+      content: counter(flow-counter);
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--blue-500);
+      color: var(--white);
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(30,80,150,.3);
+    }
+
+    /* ── Data category cards ──────────────────────────────────── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .data-card {
+      border-radius: 10px;
+      padding: 18px 18px;
+      border: 1px solid;
+    }
+
+    .data-card.trip {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .data-card.lifetime {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .data-card.battery {
+      background: #fefce8;
+      border-color: #fde68a;
+    }
+
+    .data-card.property {
+      background: #faf5ff;
+      border-color: #e9d5ff;
+    }
+
+    .data-card-icon { font-size: 22px; margin-bottom: 8px; }
+
+    .data-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .data-card.trip      .data-card-title { color: var(--blue-600); }
+    .data-card.lifetime  .data-card-title { color: #166534; }
+    .data-card.battery   .data-card-title { color: #92400e; }
+    .data-card.property  .data-card-title { color: #6b21a8; }
+
+    .data-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .data-card ul li {
+      font-size: 12.5px;
+      color: var(--gray-600);
+      padding: 2px 0;
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .data-card ul li::before {
+      content: '›';
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Reference link cards ─────────────────────────────────── */
+    .ref-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .ref-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      text-decoration: none;
+      transition: box-shadow var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ref-card:hover { box-shadow: var(--shadow-md); }
+
+    .ref-card-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ref-card-icon.jama  { background: #dbeafe; }
+    .ref-card-icon.jira  { background: #e0f7ff; }
+    .ref-card-icon.reg   { background: #fef3c7; }
+
+    .ref-card-body {}
+
+    .ref-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 3px;
+    }
+
+    .ref-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue-600);
+    }
+
+    .ref-card-sub {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    /* ── Validation checklist ─────────────────────────────────── */
+    .checklist {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      margin: 16px 0;
+    }
+
+    .checklist-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+      color: var(--gray-700);
+    }
+
+    .checklist-row:last-child { border-bottom: none; }
+
+    .check-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #dcfce7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #166534;
+      flex-shrink: 0;
+    }
+
+    /* ── Misunderstanding cards ───────────────────────────────── */
+    .myth-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .myth-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .myth-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 8px;
+    }
+
+    .myth-label.correct { color: var(--green); }
+
+    .myth-claim {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 8px;
+    }
+
+    .myth-correction {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    /* ── Timeline / learning path ─────────────────────────────── */
+    .learning-path {
+      position: relative;
+      margin: 20px 0;
+      padding-left: 28px;
+    }
+
+    .learning-path::before {
+      content: '';
+      position: absolute;
+      left: 11px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--blue-400), var(--blue-200));
+    }
+
+    .lp-step {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .lp-step::before {
+      content: '';
+      position: absolute;
+      left: -22px;
+      top: 7px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--blue-400);
+      border: 2px solid var(--white);
+      box-shadow: 0 0 0 2px var(--blue-300);
+    }
+
+    .lp-num {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--blue-500);
+      margin-bottom: 3px;
+    }
+
+    .lp-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .lp-desc {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    /* ── Info table ───────────────────────────────────────────── */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13.5px;
+    }
+
+    .info-table th {
+      background: var(--blue-800);
+      color: var(--white);
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .info-table th:first-child { border-radius: 8px 0 0 0; }
+    .info-table th:last-child  { border-radius: 0 8px 0 0; }
+
+    .info-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: var(--gray-50); }
+    .info-table td:first-child { font-weight: 600; color: var(--gray-900); }
+
+    /* ── Estimate card ────────────────────────────────────────── */
+    .estimate-card {
+      background: linear-gradient(135deg, var(--blue-800), var(--blue-700));
+      border-radius: 12px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin: 16px 0;
+    }
+
+    .estimate-val {
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .estimate-number {
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .estimate-number span { color: var(--accent); }
+
+    .estimate-unit {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,.45);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .estimate-divider {
+      width: 1px;
+      height: 64px;
+      background: rgba(255,255,255,.15);
+    }
+
+    .estimate-detail { color: rgba(255,255,255,.75); }
+
+    .estimate-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+
+    .estimate-notes {
+      font-size: 13px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.6;
+    }
+
+    /* ── Summary ──────────────────────────────────────────────── */
+    .summary-box {
+      background: linear-gradient(135deg, var(--blue-900), var(--blue-800));
+      border-radius: 12px;
+      padding: 32px 36px;
+      color: var(--white);
+      margin: 16px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-box::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,198,255,.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .summary-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .summary-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: rgba(255,255,255,.82);
+    }
+
+    .summary-highlight {
+      font-size: 16px;
+      font-style: italic;
+      color: var(--white);
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .footer {
+      margin-left: var(--sidebar-w);
+      background: var(--blue-900);
+      padding: 28px 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .footer-left { font-size: 13px; color: rgba(255,255,255,.45); }
+    .footer-left strong { color: rgba(255,255,255,.75); }
+    .footer-right { font-size: 12px; color: rgba(255,255,255,.3); }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main, .footer { margin-left: 0; }
+      .hero { padding: 40px 28px 36px; }
+      .content { padding: 32px 28px 60px; }
+      .hero-stats { gap: 20px; }
+      .footer { padding: 24px 28px; }
+    }
+
+    @media (max-width: 600px) {
+      .ecu-grid, .data-grid, .path-cards, .myth-grid { grid-template-columns: 1fr; }
+      .flow-pipeline { flex-direction: column; align-items: flex-start; }
+      .flow-arrow { transform: rotate(90deg); padding: 4px 0; }
+      .estimate-card { flex-direction: column; gap: 16px; }
+      .estimate-divider { width: 100%; height: 1px; }
+    }
+
+    /* ── Scroll progress ──────────────────────────────────────── */
+    .scroll-progress {
+      position: fixed;
+      top: 56px; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,.1);
+      z-index: 300;
+    }
+
+    .scroll-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--blue-300));
+      transition: width .1s linear;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Scroll progress bar ── -->
+<div class="scroll-progress">
+  <div class="scroll-progress-bar" id="progressBar"></div>
+</div>
+
+<!-- ── Top bar ── -->
+<header class="topbar">
+  <a href="#" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="rgba(255,255,255,0.08)"/>
+      <path d="M7 14a7 7 0 1 1 14 0A7 7 0 0 1 7 14Z" stroke="#00c6ff" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="3" fill="#00c6ff"/>
+      <path d="M14 7v2M14 19v2M7 14H9M19 14h2" stroke="#00c6ff" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span class="topbar-brand">Feature Guide</span>
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-title">On-Board Monitoring (OBM)</span>
+  <div class="topbar-meta">
+    <span class="badge green"><span class="badge-dot"></span>F010453</span>
+    <span class="badge blue">BEV Focus</span>
+    <span class="badge amber">EU Regulated</span>
+  </div>
+</header>
+
+<!-- ── Layout wrapper ── -->
+<div class="layout">
+
+  <!-- ── Sidebar navigation ── -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Sections</div>
+
+    <div class="nav-section">
+      <a href="#sec1" class="nav-item active"><span class="nav-num">1</span>Overview &amp; Feature Info</a>
+      <a href="#sec2" class="nav-item"><span class="nav-num">2</span>Why OBM Exists</a>
+      <a href="#sec3" class="nav-item"><span class="nav-num">3</span>High-Level Concept</a>
+      <a href="#sec4" class="nav-item"><span class="nav-num">4</span>Main Functions</a>
+      <a href="#sec5" class="nav-item"><span class="nav-num">5</span>Data Categories</a>
+      <a href="#sec6" class="nav-item"><span class="nav-num">6</span>ECU Roles</a>
+      <a href="#sec7" class="nav-item"><span class="nav-num">7</span>End-to-End Flow</a>
+      <a href="#sec8" class="nav-item"><span class="nav-num">8</span>Output Paths</a>
+      <a href="#sec9" class="nav-item"><span class="nav-num">9</span>OBM in BEV</a>
+      <a href="#sec10" class="nav-item"><span class="nav-num">10</span>Engineer Validation</a>
+      <a href="#sec11" class="nav-item"><span class="nav-num">11</span>Message List</a>
+      <a href="#sec12" class="nav-item"><span class="nav-num">12</span>Test Time Estimate</a>
+      <a href="#sec13" class="nav-item"><span class="nav-num">13</span>Testing Mindset</a>
+      <a href="#sec14" class="nav-item"><span class="nav-num">14</span>Common Misunderstandings</a>
+      <a href="#sec15" class="nav-item"><span class="nav-num">15</span>Learning Path</a>
+      <a href="#sec16" class="nav-item"><span class="nav-num">16</span>Summary</a>
+    </div>
+  </nav>
+
+  <!-- ── Main area ── -->
+  <div class="main">
+
+    <!-- ── Hero ── -->
+    <div class="hero">
+      <div class="hero-grid-bg"></div>
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-text">Feature Assurance Guide</span>
+          <span class="hero-eyebrow-line"></span>
+        </div>
+        <h1>On-Board Monitoring<br><span>(OBM)</span> Guide</h1>
+        <p class="hero-subtitle">
+          A complete reference for understanding the OBM data pipeline — from vehicle behavior and ECU roles to diagnostic readout, cloud delivery, and BEV-specific applicability.
+        </p>
+        <div class="hero-badges">
+          <span class="badge green"><span class="badge-dot"></span>Feature ID: F010453</span>
+          <span class="badge blue">Author: Ibrahim Munaser</span>
+          <span class="badge amber">~8 min read</span>
+          <span class="badge">EU 2025/1707</span>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">16<span> §</span></div>
+            <div class="hero-stat-label">Sections</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">6<span></span></div>
+            <div class="hero-stat-label">ECU Roles</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">3<span></span></div>
+            <div class="hero-stat-label">Output Paths</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">4<span> d</span></div>
+            <div class="hero-stat-label">BEV Test Estimate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Content ── -->
+    <div class="content">
+
+      <!-- § 1 Overview -->
+      <section class="doc-section" id="sec1">
+        <div class="section-header">
+          <div class="section-num-badge">1</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 1.0</div>
+            <h2 class="section-title">On-Board Monitoring (OBM)</h2>
+          </div>
+        </div>
+
+        <div class="subsection" id="sec1-1">
+          <div class="subsection-header">
+            <span class="subsection-pill">1.1</span>
+            <h3 class="subsection-title">Overview</h3>
+          </div>
+
+          <p>On-Board Monitoring, or OBM, is a vehicle feature that collects required operating data, organizes it into structured data sets, stores it, makes it available through diagnostics, and sends it to the cloud through telematics.</p>
+
+          <div class="callout highlight">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <div class="callout-title">Simple Definition</div>
+              <p>OBM is a vehicle data system that monitors how the vehicle is being used and turns that information into structured reports.</p>
+            </div>
+          </div>
+
+          <p>The main purpose of OBM is to support the collection, storage, and off-boarding of regulated vehicle-use data. This data can be accessed locally through diagnostics or sent externally through telematics for broader analysis.</p>
+
+          <p>For battery electric vehicles, OBM is especially focused on:</p>
+          <ul class="doc-list">
+            <li>Charging behavior</li>
+            <li>Battery behavior</li>
+            <li>Trip-related information</li>
+            <li>Long-term vehicle-use statistics</li>
+          </ul>
+
+          <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div class="callout-body">
+              <div class="callout-title">Customer Transparency</div>
+              <p>OBM is not a feature the customer manually turns on or operates directly. The customer simply uses the vehicle normally — driving, charging, stopping, and parking all create the operating conditions that generate OBM data.</p>
+            </div>
+          </div>
+
+          <p>OBM is also not the main owner of the scientific correctness of every value inside the data package. Deep domain correctness — such as detailed battery-model behavior or emissions-model behavior — is generally owned by the relevant powertrain or battery teams. OBM's main role is to ensure that the required data is <strong>present</strong>, <strong>structured correctly</strong>, <strong>stored correctly</strong>, <strong>available through the correct paths</strong>, and <strong>sent successfully</strong>.</p>
+        </div>
+
+        <div class="subsection" id="sec1-2">
+          <div class="subsection-header">
+            <span class="subsection-pill">1.2</span>
+            <h3 class="subsection-title">Feature Information</h3>
+          </div>
+          <table class="info-table">
+            <thead>
+              <tr><th>Attribute</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Feature Name</td><td>On-Board Monitoring</td></tr>
+              <tr><td>Feature ID</td><td>F010453</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="subsection" id="sec1-3">
+          <div class="subsection-header">
+            <span class="subsection-pill">1.3</span>
+            <h3 class="subsection-title">Key Reference Links</h3>
+          </div>
+          <div class="ref-cards">
+            <a href="#" class="ref-card">
+              <div class="ref-card-icon jama">📋</div>
+              <div class="ref-card-body">
+                <div class="ref-card-label">Jama</div>
+                <div class="ref-card-title">F010453 – On-Board Monitoring (OBM)</div>
+                <div class="ref-card-sub">Jama Software Requirements</div>
+              </div>
+            </a>
+            <a href="#" class="ref-card">
+              <div class="ref-card-icon jira">🔗</div>
+              <div class="ref-card-body">
+                <div class="ref-card-label">JIRA</div>
+                <div class="ref-card-title">GFD-868: On-Board Monitoring (OBM)</div>
+                <div class="ref-card-sub">Issue Tracker</div>
+              </div>
+            </a>
+            <a href="https://eur-lex.europa.eu/eli/reg_impl/2025/1707/oj" class="ref-card" target="_blank" rel="noopener">
+              <div class="ref-card-icon reg">📜</div>
+              <div class="ref-card-body">
+                <div class="ref-card-label">EU Regulation</div>
+                <div class="ref-card-title">Commission Implementing Regulation (EU) 2025/1707</div>
+                <div class="ref-card-sub">eur-lex.europa.eu</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 2 Why OBM Exists -->
+      <section class="doc-section" id="sec2">
+        <div class="section-header">
+          <div class="section-num-badge">2</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 2.0</div>
+            <h2 class="section-title">Why OBM Exists</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">2.1</span>
+            <h3 class="subsection-title">Regulatory and Analytical Purpose</h3>
+          </div>
+          <p>OBM exists because the vehicle must collect certain regulated operating data and make it available for downstream analysis. This data is not mainly intended to monitor one specific customer. Instead, it supports analysis at a broader level:</p>
+          <ul class="doc-list">
+            <li>Fleet level</li>
+            <li>Model-year level</li>
+            <li>Vehicle-line level</li>
+          </ul>
+          <p>For battery electric vehicles, the focus is more heavily on battery behavior, charging behavior, trip-related energy use, and long-term vehicle-use patterns.</p>
+          <div class="callout info">
+            <span class="callout-icon">ℹ️</span>
+            <div class="callout-body">
+              <div class="callout-title">Structured Package</div>
+              <p>The vehicle does not necessarily send every internal detail it knows. Instead, it sends the required structured package that represents the applicable data for the program and powertrain.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">2.2</span>
+            <h3 class="subsection-title">Regulation Reference</h3>
+          </div>
+          <div class="callout warning">
+            <span class="callout-icon">📜</span>
+            <div class="callout-body">
+              <div class="callout-title">Governing Regulation</div>
+              <p><strong>Commission Implementing Regulation (EU) 2025/1707 of 25 July 2025</strong> — laying down rules for the application of Regulation (EU) 2024/1257 as regards specific methods, requirements and tests, including compliance thresholds, for OBFCM devices and OBM systems, characteristics and performance of driver warning systems and inducement methods and methods to assess their operation, EVP format and data and methods of communication of EVP data of motor vehicles of categories M1 and N1.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 3 High-Level Concept -->
+      <section class="doc-section" id="sec3">
+        <div class="section-header">
+          <div class="section-num-badge">3</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 3.0</div>
+            <h2 class="section-title">High-Level Concept</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">3.1</span>
+            <h3 class="subsection-title">OBM as a Data Pipeline</h3>
+          </div>
+          <p>The easiest way to understand OBM is to view it as a data pipeline inside the vehicle. The high-level flow is:</p>
+
+          <div class="flow-pipeline">
+            <div class="flow-step">
+              <div class="flow-step-box">Vehicle Behavior</div>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+              <div class="flow-step-box">ECU Signals</div>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+              <div class="flow-step-box highlight-step">PCM Processing</div>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+              <div class="flow-step-box">OBM Package</div>
+            </div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">
+              <div class="flow-step-box">Diagnostics / Cloud</div>
+            </div>
+          </div>
+
+          <ul class="doc-list">
+            <li>The customer uses the vehicle normally.</li>
+            <li>Multiple ECUs generate or provide the required data.</li>
+            <li>The PCM performs the main OBM logic.</li>
+            <li>The data is grouped into structured OBM data sets.</li>
+            <li>The data is made available through diagnostics and telematics.</li>
+          </ul>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">3.2</span>
+            <h3 class="subsection-title">Why This Matters</h3>
+          </div>
+          <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <div class="callout-title">OBM is multi-step — failure can happen anywhere</div>
+              <p>A signal can exist in the vehicle and OBM can still fail if: the signal never reaches the correct ECU; the signal is not inserted into the correct data structure; the final package is not sent successfully.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 4 Main Functions -->
+      <section class="doc-section" id="sec4">
+        <div class="section-header">
+          <div class="section-num-badge">4</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 4.0</div>
+            <h2 class="section-title">Main Functions of OBM</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">4.1</span>
+            <h3 class="subsection-title">Data Collection</h3>
+          </div>
+          <p>OBM collects many different values from the vehicle. These can include trip-related values, lifetime values, battery-related values, and metadata and identification values. The exact set depends on applicable requirements and vehicle powertrain.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">4.2</span>
+            <h3 class="subsection-title">Data Structuring</h3>
+          </div>
+          <p>OBM does not simply store raw signals in one flat list. It groups data into structured sets, working in layers:</p>
+          <div class="flow-pipeline">
+            <div class="flow-step"><div class="flow-step-box">Signals</div></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><div class="flow-step-box">Trip Data</div></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><div class="flow-step-box highlight-step">OBM Package</div></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><div class="flow-step-box">Storage / Off-Board</div></div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">4.3</span>
+            <h3 class="subsection-title">Diagnostic Support</h3>
+          </div>
+          <p>OBM data must be available locally through diagnostics. This allows tools connected through the OBD path to read the relevant data from the appropriate ECUs.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">4.4</span>
+            <h3 class="subsection-title">Off-Board Support</h3>
+          </div>
+          <p>OBM must support sending the final data package out of the vehicle through the telematics path. It is not enough for the data to be built correctly — the system must also support successful delivery to the cloud so the package is not silently lost in transit.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">4.5</span>
+            <h3 class="subsection-title">Display Support</h3>
+          </div>
+          <p>A limited subset of OBM-related information may also be shown in the vehicle HMI, depending on program and powertrain applicability.</p>
+        </div>
+      </section>
+
+      <!-- § 5 Data Categories -->
+      <section class="doc-section" id="sec5">
+        <div class="section-header">
+          <div class="section-num-badge">5</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 5.0</div>
+            <h2 class="section-title">OBM Data Categories</h2>
+          </div>
+        </div>
+
+        <div class="data-grid">
+          <div class="data-card trip">
+            <div class="data-card-icon">🛣️</div>
+            <div class="data-card-title">5.1 Trip Data</div>
+            <ul>
+              <li>Trip distance</li>
+              <li>Trip time</li>
+              <li>Energy use</li>
+              <li>Charged energy</li>
+              <li>Speed-related categories</li>
+            </ul>
+          </div>
+
+          <div class="data-card lifetime">
+            <div class="data-card-icon">📊</div>
+            <div class="data-card-title">5.2 Lifetime Data</div>
+            <ul>
+              <li>Cumulative running totals</li>
+              <li>Built over vehicle lifetime</li>
+              <li>Not one-trip-only values</li>
+            </ul>
+          </div>
+
+          <div class="data-card battery">
+            <div class="data-card-icon">🔋</div>
+            <div class="data-card-title">5.4 Battery-Related Data</div>
+            <ul>
+              <li>Battery state of health</li>
+              <li>Certified energy &amp; range</li>
+              <li>Charging data</li>
+              <li>Battery temperature data</li>
+            </ul>
+          </div>
+
+          <div class="data-card property">
+            <div class="data-card-icon">🏷️</div>
+            <div class="data-card-title">5.3 Property / Metadata</div>
+            <ul>
+              <li>Version numbers</li>
+              <li>Identifiers</li>
+              <li>Package-level metadata</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 6 ECU Roles -->
+      <section class="doc-section" id="sec6">
+        <div class="section-header">
+          <div class="section-num-badge">6</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 6.0</div>
+            <h2 class="section-title">ECU Roles in OBM</h2>
+          </div>
+        </div>
+
+        <div class="ecu-grid">
+          <div class="ecu-card primary">
+            <div class="ecu-header">
+              <div class="ecu-icon">🧠</div>
+              <div>
+                <div class="ecu-name">PCM</div>
+                <span class="ecu-role-tag">Primary Brain</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Main OBM logic center. Receives inputs from all other ECUs, runs OBM logic, builds structured data sets, and prepares the final OBM package.</p>
+          </div>
+
+          <div class="ecu-card secondary">
+            <div class="ecu-header">
+              <div class="ecu-icon">⚡</div>
+              <div>
+                <div class="ecu-name">BECM</div>
+                <span class="ecu-role-tag">Battery Source</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Source for battery and high-voltage data elements in BEV applications. Provides battery-related values to both diagnostics and PCM for packaging.</p>
+          </div>
+
+          <div class="ecu-card gateway">
+            <div class="ecu-header">
+              <div class="ecu-icon">🔀</div>
+              <div>
+                <div class="ecu-name">ECG</div>
+                <span class="ecu-role-tag">Network Gateway</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Routes messages between ECUs and networks. Does not own the main feature logic or build data sets. Helps data travel — it does not build it.</p>
+          </div>
+
+          <div class="ecu-card sender">
+            <div class="ecu-header">
+              <div class="ecu-icon">📡</div>
+              <div>
+                <div class="ecu-name">TCU</div>
+                <span class="ecu-role-tag">Cloud Sender</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Telematics sender. Receives the final off-board payload and sends it to the cloud. If TCU does not send successfully, OBM is not complete end to end.</p>
+          </div>
+
+          <div class="ecu-card display">
+            <div class="ecu-header">
+              <div class="ecu-icon">🖥️</div>
+              <div>
+                <div class="ecu-name">APIM</div>
+                <span class="ecu-role-tag">Display Path</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Supports the center display. Shows a limited subset of OBM-related information on the HMI. This is a display subset only — not the full OBM package.</p>
+          </div>
+
+          <div class="ecu-card warn">
+            <div class="ecu-header">
+              <div class="ecu-icon">⚠️</div>
+              <div>
+                <div class="ecu-name">IPC</div>
+                <span class="ecu-role-tag">Warning Path</span>
+              </div>
+            </div>
+            <p class="ecu-desc">Supports warning behavior in some non-BEV applications. For BEV applications this warning path may not apply, though IPC may still appear in a generic feature boundary.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 7 End-to-End Flow -->
+      <section class="doc-section" id="sec7">
+        <div class="section-header">
+          <div class="section-num-badge">7</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 7.0</div>
+            <h2 class="section-title">End-to-End OBM Flow</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">7.1</span>
+            <h3 class="subsection-title">Normal Flow</h3>
+          </div>
+          <ol class="flow-list">
+            <li>The customer uses the vehicle normally.</li>
+            <li>The vehicle generates operating data.</li>
+            <li>Source ECUs (such as BECM) create the needed values.</li>
+            <li>Data moves across the network where needed.</li>
+            <li>PCM receives the required inputs.</li>
+            <li>PCM performs the main OBM logic.</li>
+            <li>PCM builds the required data structures.</li>
+            <li>The data becomes available through diagnostics.</li>
+            <li>PCM sends the off-board package toward TCU.</li>
+            <li>TCU sends the package to the cloud.</li>
+            <li>A limited subset may also be sent to APIM for display.</li>
+          </ol>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">7.2</span>
+            <h3 class="subsection-title">Why End-to-End Matters</h3>
+          </div>
+          <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <div class="callout-title">OBM can fail at several points in the chain</div>
+              <p>A signal may exist but never reach PCM. A signal may reach PCM but never be packaged correctly. A correct package may be built but never leave through TCU. That is why OBM should always be understood as an end-to-end system.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 8 Output Paths -->
+      <section class="doc-section" id="sec8">
+        <div class="section-header">
+          <div class="section-num-badge">8</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 8.0</div>
+            <h2 class="section-title">Main Output Paths</h2>
+          </div>
+        </div>
+
+        <div class="path-cards">
+          <div class="path-card">
+            <div class="path-card-icon">🔌</div>
+            <div class="path-card-name">8.1 Diagnostic Path</div>
+            <p class="path-card-desc">OBD-connected tools can read relevant values from PCM and BECM directly.</p>
+          </div>
+          <div class="path-card">
+            <div class="path-card-icon">☁️</div>
+            <div class="path-card-name">8.2 Cloud Path</div>
+            <p class="path-card-desc">Final OBM package sent to the cloud via TCU. The main off-board path for OBM.</p>
+          </div>
+          <div class="path-card">
+            <div class="path-card-icon">🖥️</div>
+            <div class="path-card-name">8.3 HMI Path</div>
+            <p class="path-card-desc">Limited subset displayed in center screen through APIM. Not the full OBM package.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 9 OBM in BEV -->
+      <section class="doc-section" id="sec9">
+        <div class="section-header">
+          <div class="section-num-badge">9</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 9.0</div>
+            <h2 class="section-title">OBM in BEV Applications</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">9.1</span>
+            <h3 class="subsection-title">Powertrain Applicability</h3>
+          </div>
+          <div class="callout info">
+            <span class="callout-icon">🎯</span>
+            <div class="callout-body">
+              <div class="callout-title">Applicability Must Always Be Considered</div>
+              <p>For a BEV, not every item in a full global OBM requirement list will apply. Some requirements are intended for combustion-related systems and do not apply to a battery electric vehicle. Engineers should focus on what is applicable to the specific program and powertrain.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">9.2</span>
+            <h3 class="subsection-title">Practical BEV Focus Areas</h3>
+          </div>
+          <ul class="doc-list check">
+            <li>Center display path</li>
+            <li>Diagnostic readout path</li>
+            <li>Cloud off-board path</li>
+            <li>Battery and charging-related data</li>
+            <li>Correct PCM packaging of the applicable data set</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- § 10 Validation -->
+      <section class="doc-section" id="sec10">
+        <div class="section-header">
+          <div class="section-num-badge">10</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 10.0</div>
+            <h2 class="section-title">What Engineers Validate in OBM</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">10.1</span>
+            <h3 class="subsection-title">Main Validation Focus</h3>
+          </div>
+          <p>The main engineering job in OBM is not to prove the scientific truth of every number. The main job is to ensure that the <strong>data system works correctly</strong>.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">10.2</span>
+            <h3 class="subsection-title">Typical Validation Areas</h3>
+          </div>
+          <div class="checklist">
+            <div class="checklist-row"><div class="check-icon">✓</div>The required signals exist</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>The signals reach the correct ECUs</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>The PCM builds the correct data structures</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>The data is readable through diagnostics</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>The display path works where applicable</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>The off-board package reaches the cloud successfully</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Correct requirements are applied for the correct powertrain and program</div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">10.3</span>
+            <h3 class="subsection-title">Key Takeaway</h3>
+          </div>
+          <div class="callout success">
+            <span class="callout-icon">✅</span>
+            <div class="callout-body">
+              <div class="callout-title">OBM Engineering is About</div>
+              <p>Data flow · Structure · Routing · Availability · Delivery</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 11 Message List -->
+      <section class="doc-section" id="sec11">
+        <div class="section-header">
+          <div class="section-num-badge">11</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 11.0</div>
+            <h2 class="section-title">Why the Message List Matters</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">11.1</span>
+            <h3 class="subsection-title">Signal Dependency</h3>
+          </div>
+          <p>Signal and message-list work is one of the highest-priority parts of OBM. Signals may be:</p>
+          <ul class="doc-list">
+            <li>Shared signals</li>
+            <li>Related-feature signals</li>
+            <li>OBM-specific signals</li>
+          </ul>
+          <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <div class="callout-title">Blocker Risk</div>
+              <p>If the required signals are not added correctly, the rest of the feature cannot function properly.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">11.2</span>
+            <h3 class="subsection-title">Ownership and DCR Actions</h3>
+          </div>
+          <p>Engineers must understand TX ECU ownership, RX ECU ownership, and required DCR actions. If the signals do not move from source to receiver, the feature is blocked before deeper validation can begin.</p>
+        </div>
+      </section>
+
+      <!-- § 12 Test Time -->
+      <section class="doc-section" id="sec12">
+        <div class="section-header">
+          <div class="section-num-badge">12</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 12.0</div>
+            <h2 class="section-title">BEV Test Time Estimate</h2>
+          </div>
+        </div>
+
+        <div class="estimate-card">
+          <div class="estimate-val">
+            <div class="estimate-number">4<span></span></div>
+            <div class="estimate-unit">Days · BEV OBM</div>
+          </div>
+          <div class="estimate-divider"></div>
+          <div class="estimate-detail">
+            <div class="estimate-title">Current BEV Test Time Estimate</div>
+            <p class="estimate-notes">
+              This estimate should be used as a working assumption for planning and coordination. Actual test time may change depending on: software maturity · test environment availability · signal readiness · vehicle readiness · issue discovery during execution.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 13 Testing Mindset -->
+      <section class="doc-section" id="sec13">
+        <div class="section-header">
+          <div class="section-num-badge">13</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 13.0</div>
+            <h2 class="section-title">Testing Mindset for OBM</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">13.1</span>
+            <h3 class="subsection-title">Practical Test Focus</h3>
+          </div>
+          <div class="checklist">
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm the signals exist</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm the signals are routed correctly</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm the PCM builds the package correctly</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm diagnostics can read the data</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm the display path works where needed</div>
+            <div class="checklist-row"><div class="check-icon">✓</div>Confirm the cloud path works end to end</div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">13.2</span>
+            <h3 class="subsection-title">Documentation Maturity</h3>
+          </div>
+          <div class="callout info">
+            <span class="callout-icon">📝</span>
+            <div class="callout-body">
+              <div class="callout-title">Living Documentation</div>
+              <p>Test documentation should not automatically be treated as final. OBM test content can continue to evolve as the feature matures and as testability becomes clearer.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 14 Common Misunderstandings -->
+      <section class="doc-section" id="sec14">
+        <div class="section-header">
+          <div class="section-num-badge">14</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 14.0</div>
+            <h2 class="section-title">Common Misunderstandings</h2>
+          </div>
+        </div>
+
+        <div class="myth-grid">
+          <div class="myth-card">
+            <div class="myth-label">❌ Misconception 14.1</div>
+            <div class="myth-claim">"OBM is just one signal."</div>
+            <p class="myth-correction">OBM is a full data system, not one signal or one message. It is a multi-step pipeline spanning multiple ECUs and output paths.</p>
+          </div>
+          <div class="myth-card">
+            <div class="myth-label">❌ Misconception 14.2</div>
+            <div class="myth-claim">"ECG owns the feature data."</div>
+            <p class="myth-correction">ECG mainly supports message movement across the network. It does not own the main feature logic or build the data set.</p>
+          </div>
+          <div class="myth-card">
+            <div class="myth-label">❌ Misconception 14.3</div>
+            <div class="myth-claim">"TCU is the OBM brain."</div>
+            <p class="myth-correction">TCU mainly sends. It does not build the OBM data package. The PCM is the feature brain.</p>
+          </div>
+          <div class="myth-card">
+            <div class="myth-label">❌ Misconception 14.4</div>
+            <div class="myth-claim">"All global requirements apply equally."</div>
+            <p class="myth-correction">Not every requirement in a large global document applies equally to every powertrain. Applicability must always be considered for the specific program.</p>
+          </div>
+          <div class="myth-card">
+            <div class="myth-label">❌ Misconception 14.5</div>
+            <div class="myth-claim">"OBM and OBECM are the same."</div>
+            <p class="myth-correction">OBM and OBECM are related, but they are not the same feature. OBM is broader and more complex.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 15 Learning Path -->
+      <section class="doc-section" id="sec15">
+        <div class="section-header">
+          <div class="section-num-badge">15</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 15.0</div>
+            <h2 class="section-title">Recommended Learning Path</h2>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">15.1</span>
+            <h3 class="subsection-title">Suggested Order</h3>
+          </div>
+
+          <div class="learning-path">
+            <div class="lp-step">
+              <div class="lp-num">Step 1</div>
+              <div class="lp-title">Understand the full end-to-end flow</div>
+              <p class="lp-desc">Start with the big picture before diving into ECU details or requirements lists.</p>
+            </div>
+            <div class="lp-step">
+              <div class="lp-num">Step 2</div>
+              <div class="lp-title">Learn ECU roles: PCM, BECM, ECG, TCU, APIM, IPC</div>
+              <p class="lp-desc">Understand what each ECU is responsible for and what it is not.</p>
+            </div>
+            <div class="lp-step">
+              <div class="lp-num">Step 3</div>
+              <div class="lp-title">Understand signal presence vs. package correctness</div>
+              <p class="lp-desc">A signal existing in the vehicle does not mean it is being packaged correctly.</p>
+            </div>
+            <div class="lp-step">
+              <div class="lp-num">Step 4</div>
+              <div class="lp-title">Learn the three main output paths</div>
+              <p class="lp-desc">Diagnostics, cloud, and HMI — each serves a different purpose.</p>
+            </div>
+            <div class="lp-step">
+              <div class="lp-num">Step 5</div>
+              <div class="lp-title">Learn which requirements apply to the target powertrain</div>
+              <p class="lp-desc">BEV applicability differs from ICE. Never assume full global applicability.</p>
+            </div>
+            <div class="lp-step">
+              <div class="lp-num">Step 6</div>
+              <div class="lp-title">Review boundary diagram and message list</div>
+              <p class="lp-desc">Tackle the detailed requirement items after the architecture is clear.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <span class="subsection-pill">15.2</span>
+            <h3 class="subsection-title">Why This Order Works</h3>
+          </div>
+          <div class="callout success">
+            <span class="callout-icon">✅</span>
+            <div class="callout-body">
+              <div class="callout-title">Architecture First</div>
+              <p>Starting with the architecture usually makes more sense than starting with a large requirement list. Once the system flow is clear, the detailed requirements become much easier to understand.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 16 Summary -->
+      <section class="doc-section" id="sec16">
+        <div class="section-header">
+          <div class="section-num-badge">16</div>
+          <div class="section-title-block">
+            <div class="section-num-label">Section 16.0</div>
+            <h2 class="section-title">Summary</h2>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <div class="summary-title">Final Summary</div>
+          <div class="summary-body">
+            <p>OBM is a vehicle data feature that collects required operating data, organizes it into structured data sets, makes it available through diagnostics, and sends it to the cloud through telematics.</p>
+            <br>
+            <p>In a BEV application:</p>
+            <ul style="list-style:none;padding:0;margin:10px 0 0;">
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>Source ECUs create the data
+              </li>
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>PCM acts as the main OBM brain
+              </li>
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>BECM provides major battery-related data
+              </li>
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>ECG helps messages move where they need to go
+              </li>
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>TCU sends the final package to the cloud
+              </li>
+              <li style="padding:4px 0;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.8);">
+                <span style="color:#00c6ff;font-weight:700;flex-shrink:0;">›</span>APIM can show a limited subset on the display
+              </li>
+            </ul>
+            <br>
+            <p>OBM is successful only when the data is: <strong style="color:#00c6ff;">applicable · present · routed correctly · packaged correctly · readable · sent successfully</strong></p>
+          </div>
+          <div class="summary-highlight">
+            OBM is a vehicle feature that collects required operating data, organizes it into structured packages, makes it available through diagnostics, and sends it to the cloud through telematics.
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <div class="footer-left">
+    <strong>On-Board Monitoring (OBM) Guide</strong> · Feature ID F010453 · By Ibrahim Munaser
+  </div>
+  <div class="footer-right">Commission Implementing Regulation (EU) 2025/1707 · Feature Assurance Engineering</div>
+</footer>
+
+<script>
+  /* ── Scroll progress bar ── */
+  const progressBar = document.getElementById('progressBar');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+
+  /* ── Active nav highlight ── */
+  const sections = document.querySelectorAll('.doc-section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  function updateActiveNav() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY + 100 >= s.offsetTop) current = s.id;
+    });
+    navItems.forEach(item => {
+      const href = item.getAttribute('href').replace('#', '');
+      item.classList.toggle('active', href === current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+</script>
+
+</body>
+</html>
